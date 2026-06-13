@@ -1,0 +1,23 @@
+<svg width="100%" viewBox="0 0 690 330" role="img" xmlns="http://www.w3.org/2000/svg" style="">
+  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">TEK247 name logo</title>
+  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">TEK247 wordmark logo on white background with blue text</desc>
+
+  <rect x="0" y="0" width="680" height="320" fill="#ffffff" rx="16" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0C447C"/>
+      <stop offset="100%" style="stop-color:#378ADD"/>
+    </linearGradient>
+  <mask id="imagine-text-gaps-zck2ak" maskUnits="userSpaceOnUse"><rect x="0" y="0" width="690" height="330" fill="white"/><rect x="112.640625" y="92.5" width="454.71875" height="139" fill="black" rx="2"/><rect x="119.72265625" y="244" width="440.5546875" height="19" fill="black" rx="2"/></mask></defs>
+
+  <rect x="60" y="130" width="8" height="60" fill="#378ADD" rx="2" style="fill:rgb(55, 138, 221);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <text x="340" y="200" text-anchor="middle" font-family="'Arial Black', 'Impact', sans-serif" font-size="96" font-weight="900" letter-spacing="6" fill="url(#blueGrad)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Arial Black&quot;, Impact, sans-serif;font-size:96px;font-weight:900;text-anchor:middle;dominant-baseline:auto">TEK<tspan fill="#0C447C" style="fill:rgb(12, 68, 124);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Arial Black&quot;, Impact, sans-serif;font-size:96px;font-weight:900;text-anchor:middle;dominant-baseline:auto">247</tspan></text>
+
+  <line x1="60" y1="230" x2="620" y2="230" stroke="#378ADD" stroke-width="2" opacity="0.25" mask="url(#imagine-text-gaps-zck2ak)" style="fill:rgb(0, 0, 0);stroke:rgb(55, 138, 221);color:rgb(255, 255, 255);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.25;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <text x="340" y="258" text-anchor="middle" font-family="'Arial', sans-serif" font-size="13" font-weight="400" letter-spacing="8" fill="#378ADD" opacity="0.7" style="fill:rgb(55, 138, 221);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.7;font-family:Arial, sans-serif;font-size:13px;font-weight:400;text-anchor:middle;dominant-baseline:auto">TECHNOLOGY · EVERYDAY · 24/7</text>
+
+  <rect x="612" y="130" width="8" height="60" fill="#0C447C" rx="2" style="fill:rgb(12, 68, 124);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+</svg>
