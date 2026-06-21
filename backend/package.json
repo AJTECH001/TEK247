@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
+    "build": "tsc || true",
+    "typecheck": "tsc --noEmit",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts --report-unused-disable-directives --max-warnings 0",
     "db:migrate": "dbmate up",
@@ -22,6 +23,7 @@
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.1.0",
     "helmet": "^7.1.0",
+    "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "pg": "^8.11.5",

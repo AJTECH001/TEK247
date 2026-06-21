@@ -28,6 +28,15 @@ export const getMe = async (): Promise<BaseResponse<User>> => {
   return API.get<User>(Endpoints.GET_ME);
 };
 
+// ─── Enoki zkLogin ────────────────────────────────────────────────────────────
+
+export const enokiLogin = async (body: {
+  jwt: string;
+  suiAddress: string;
+}): Promise<BaseResponse<{ user: User; tokens: Tokens }>> => {
+  return API.post<typeof body, { user: User; tokens: Tokens }>(Endpoints.ENOKI_LOGIN, body);
+};
+
 // ─── Session helpers ──────────────────────────────────────────────────────────
 
 export const storeAuthData = (user: User, tokens: Tokens): void => {

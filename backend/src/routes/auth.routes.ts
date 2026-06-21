@@ -6,29 +6,15 @@ import { validate } from "../middleware/validate.middleware";
 
 const router = Router();
 
-// POST /api/v1/auth/zklogin
+// POST /api/v1/auth/enoki — Enoki zkLogin (Google) session login
 router.post(
-  "/zklogin",
+  "/enoki",
   [
-    body("jwt").notEmpty().withMessage("JWT is required"),
-    body("sub").notEmpty().withMessage("Subject ID is required"),
-    body("email").isEmail().normalizeEmail().withMessage("Valid email is required"),
-    body("fullName").notEmpty().withMessage("Full name is required"),
+    body("jwt").notEmpty().withMessage("Google ID token is required"),
     body("suiAddress").notEmpty().withMessage("Sui address is required"),
-    body("salt").notEmpty().withMessage("Salt is required"),
     validate,
   ],
-  AuthController.zkLogin
-);
-
-// POST /api/v1/auth/zklogin-salt
-router.post(
-  "/zklogin-salt",
-  [
-    body("sub").notEmpty().withMessage("Subject ID is required"),
-    validate,
-  ],
-  AuthController.getSalt
+  AuthController.enokiLogin
 );
 
 // POST /api/v1/auth/refresh

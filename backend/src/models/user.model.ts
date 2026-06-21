@@ -42,20 +42,18 @@ export const UserModel = {
   async create(data: {
     full_name: string;
     email: string;
-    password_hash: string | null;
     role?: "user" | "admin";
     sui_address?: string;
     zklogin_salt?: string;
     zklogin_sub?: string;
   }): Promise<UserRow> {
     const rows = await query<UserRow>(
-      `INSERT INTO users (full_name, email, password_hash, role, sui_address, zklogin_salt, zklogin_sub, is_email_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO users (full_name, email, role, sui_address, zklogin_salt, zklogin_sub, is_email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [
         data.full_name,
         data.email,
-        data.password_hash,
         data.role ?? "user",
         data.sui_address ?? null,
         data.zklogin_salt ?? null,

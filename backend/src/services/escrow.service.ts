@@ -75,7 +75,13 @@ export async function syncEscrowEvents(
     });
     for (const ev of page.data) {
       const shortType = ev.type.split("::").pop() ?? ev.type;
-      await onEvent(shortType, (ev.parsedJson ?? {}) as Record<string, unknown>, ev.id.txDigest);
+      try {
+        await onEvent(shortType, (ev.parsedJson ?? {}) as Record<string, unknown>, ev.id.txDigest);
+      } catch (eventErr) {
+        // A single un-processable event must not stall the cursor forever; log and
+        // move on so indexing keeps making progress.
+        logger.error(`skipping escrow event ${shortType} @ ${ev.id.txDigest}:`, eventErr);
+      }
     }
     return page.nextCursor ?? cursor;
   } catch (err) {

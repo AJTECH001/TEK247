@@ -4,24 +4,14 @@ import { UserModel, toSafeUser } from "../models/user.model";
 import { sendSuccess, sendError } from "../utils/response";
 
 export const AuthController = {
-  // POST /auth/zklogin
-  async zkLogin(req: Request, res: Response): Promise<void> {
+  // POST /auth/enoki — log in from an Enoki zkLogin session
+  async enokiLogin(req: Request, res: Response): Promise<void> {
     try {
-      const result = await AuthService.zkLogin(req.body);
+      const { jwt, suiAddress } = req.body as { jwt: string; suiAddress: string };
+      const result = await AuthService.enokiLogin({ jwt, suiAddress });
       sendSuccess(res, "Login successful", result);
     } catch (err) {
       sendError(res, (err as Error).message, 401);
-    }
-  },
-
-  // POST /auth/zklogin-salt
-  async getSalt(req: Request, res: Response): Promise<void> {
-    try {
-      const { sub } = req.body as { sub: string };
-      const salt = await AuthService.getSalt(sub);
-      sendSuccess(res, "Salt retrieved", { salt });
-    } catch (err) {
-      sendError(res, (err as Error).message, 400);
     }
   },
 

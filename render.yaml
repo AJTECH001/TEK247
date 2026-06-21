@@ -1,0 +1,51 @@
+# Render Blueprint for the TEK247 backend (Express + Postgres).
+# Deploy: Render Dashboard → New → Blueprint → connect this repo.
+# After the first deploy, set the `sync: false` vars in the dashboard
+# (CORS_ORIGIN / FRONTEND_URL = your Vercel URL; GOOGLE_CLIENT_ID; optional keys).
+databases:
+  - name: tek247-db
+    plan: free
+    databaseName: tek247_db
+    user: tek247
+
+services:
+  - type: web
+    name: tek247-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tek247-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: SUI_NETWORK
+        value: testnet
+      # Set these in the dashboard after you know your Vercel URL / have your keys:
+      - key: CORS_ORIGIN          # e.g. https://tek247.vercel.app
+        sync: false
+      - key: FRONTEND_URL         # e.g. https://tek247.vercel.app
+        sync: false
+      - key: GOOGLE_CLIENT_ID     # must match the Enoki Google provider
+        sync: false
+      # Optional — leave unset to skip (server still boots):
+      - key: SUI_PLATFORM_SECRET_KEY   # backend arbiter/issuer signer (suiprivkey...)
+        sync: false
+      - key: RESEND_API_KEY            # email; skipped if unset
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false

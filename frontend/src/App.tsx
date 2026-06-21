@@ -14,6 +14,8 @@ import SystemRequestsPage from "./pages/dashboard/system-requests";
 import SystemRequestDetailPage from "./pages/dashboard/system-request-detail";
 import OrdersPage from "./pages/dashboard/orders";
 import RepairsPage from "./pages/dashboard/repairs";
+import AccessoriesPage from "./pages/dashboard/accessories";
+import DeliveriesPage from "./pages/dashboard/deliveries";
 import NotificationsPage from "./pages/dashboard/notifications";
 import RequireAdmin from "./features/dashboard/shared/components/RequireAdmin";
 import AdminLayout from "./features/admin/shared/components/AdminLayout";
@@ -52,6 +54,8 @@ function App() {
         { path: "system-requests/:id",           element: <SystemRequestDetailPage /> },
         { path: "orders",                        element: <OrdersPage /> },
         { path: "repairs",                       element: <RepairsPage /> },
+        { path: "accessories",                   element: <AccessoriesPage /> },
+        { path: "deliveries",                    element: <RequireAdmin><DeliveriesPage /></RequireAdmin> },
         { path: "notifications",                 element: <NotificationsPage /> },
       ],
     },

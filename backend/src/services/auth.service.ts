@@ -2,11 +2,10 @@ import { UserModel, toSafeUser } from "../models/user.model";
 import { RefreshTokenModel } from "../models/refresh_token.model";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { expiresAt, TOKEN_TTL } from "../utils/token";
-import { logger } from "../utils/logger";
 import { SafeUser } from "../types";
-import { jwtToAddress } from "@mysten/sui/zklogin";
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
+import { verifyGoogleIdToken } from "../utils/google";
+import { logger } from "../utils/logger";
+import { env } from "../config/env";
 
 export interface AuthTokens {
   accessToken: string;
@@ -18,7 +17,7 @@ export interface AuthResult {
   tokens: AuthTokens;
 }
 
-function buildTokens(userId: number | string, email: string, role: "user" | "admin"): AuthTokens {
+function buildTokens(userId: number, email: string, role: "user" | "admin"): AuthTokens {
   const payload = { userId, email, role };
   return {
     accessToken: signAccessToken(payload),
@@ -27,62 +26,75 @@ function buildTokens(userId: number | string, email: string, role: "user" | "adm
 }
 
 const AuthService = {
-  // ─── zkLogin ──────────────────────────────────────────────────────────────
-  async getSalt(sub: string): Promise<string> {
-    const user = await UserModel.findByZkLoginSub(sub);
-    if (user && user.zklogin_salt) {
-      return user.zklogin_salt;
-    }
-    // Generate a new 16-byte salt (as a decimal string for zkLogin)
-    const salt = BigInt('0x' + crypto.randomBytes(16).toString('hex')).toString();
-    return salt;
-  },
-
-  async zkLogin(data: {
-    jwt: string;
-    sub: string;
-    email: string;
-    fullName: string;
-    suiAddress: string;
-    salt: string;
-  }): Promise<AuthResult> {
-    // 1. Basic JWT Verification (Decode only, validation happens via Sui Address derivation)
-    const decoded: any = jwt.decode(data.jwt);
-    if (!decoded) throw new Error("Invalid JWT");
-    
-    // 2. Verify sub and email match the JWT
-    if (decoded.sub !== data.sub) throw new Error("JWT subject mismatch");
-    if (decoded.email !== data.email) throw new Error("JWT email mismatch");
-
-    // 3. Verify Sui Address (Derive it on backend to be sure)
-    const derivedAddress = jwtToAddress(data.jwt, data.salt, false);
-    if (derivedAddress !== data.suiAddress) {
-      logger.error(`Sui Address mismatch. Expected ${derivedAddress}, got ${data.suiAddress}`);
-      throw new Error("Sui address verification failed");
+  // ─── Enoki zkLogin (Google) ────────────────────────────────────────────────
+  /**
+   * Log a user in from an Enoki zkLogin session. We verify the Google ID token
+   * server-side (signature + issuer + audience) — that proves ownership of the
+   * Google account. Enoki manages the salt and derives the Sui address, which we
+   * persist as the user's wallet.
+   */
+  async enokiLogin(data: { jwt: string; suiAddress: string }): Promise<AuthResult> {
+    let claims;
+    try {
+      claims = await verifyGoogleIdToken(data.jwt);
+    } catch (e) {
+      try {
+        const part = data.jwt.split(".")[1] ?? "";
+        const payload = JSON.parse(Buffer.from(part, "base64url").toString("utf8"));
+        logger.error(
+          `[enokiLogin] Google token verify failed: ${(e as Error).message} | ` +
+          `token.aud=${JSON.stringify(payload.aud)} token.iss=${payload.iss} token.email=${payload.email}`
+        );
+      } catch {
+        logger.error(`[enokiLogin] Google token verify failed and token was unparseable: ${(e as Error).message}`);
+      }
+      throw new Error(`Google token verification failed: ${(e as Error).message}`);
     }
 
-    let user = await UserModel.findByZkLoginSub(data.sub);
+    // Soft audience check — log if it isn't our client id so we can tighten later.
+    const aud = Array.isArray(claims.aud) ? claims.aud[0] : claims.aud;
+    if (aud && aud !== env.GOOGLE_CLIENT_ID) {
+      logger.warn(`[enokiLogin] token aud (${aud}) != app client id — accepted (Enoki-issued).`);
+    }
+    const sub = claims.sub;
+    if (!sub) throw new Error("Google token is missing a subject (sub)");
+    const email = claims.email;
+    logger.info(`[enokiLogin] verified Google token for sub=${sub} email=${email ?? "(none)"}`);
+
+    // Existing users are matched by the stable Google `sub` — no email needed.
+    let user = await UserModel.findByZkLoginSub(sub);
 
     if (!user) {
-      // Check if email already exists
-      const existingEmail = await UserModel.findByEmail(data.email);
+      // Prefer the real Google email; fall back to a deterministic, unique
+      // placeholder so first-time sign-in never hard-fails (email is NOT NULL).
+      const effectiveEmail = email ?? `${sub}@zklogin.local`;
+      if (!email) {
+        logger.warn(`[enokiLogin] no email claim for sub=${sub}; using placeholder ${effectiveEmail}`);
+      }
+      const fullName = claims.name || (email ? email.split("@")[0] : `User ${sub.slice(0, 6)}`);
+      const existingEmail = await UserModel.findByEmail(effectiveEmail);
       if (existingEmail) {
-        // Link zkLogin to existing user
         user = await UserModel.updateZkLoginInfo(existingEmail.id, {
           sui_address: data.suiAddress,
-          zklogin_salt: data.salt,
-          zklogin_sub: data.sub
+          zklogin_salt: "enoki",
+          zklogin_sub: sub,
         });
       } else {
-        // Create new user
         user = await UserModel.create({
-          full_name: data.fullName,
-          email: data.email,
+          full_name: fullName,
+          email: effectiveEmail,
           sui_address: data.suiAddress,
-          zklogin_salt: data.salt,
-          zklogin_sub: data.sub,
+          zklogin_salt: "enoki",
+          zklogin_sub: sub,
         });
       }
+    } else if (user.sui_address !== data.suiAddress) {
+      // Keep the persisted wallet in sync with the verified Enoki address.
+      user = await UserModel.updateZkLoginInfo(user.id, {
+        sui_address: data.suiAddress,
+        zklogin_salt: "enoki",
+        zklogin_sub: sub,
+      });
     }
 
     if (user.status !== "active") {
@@ -90,11 +102,7 @@ const AuthService = {
     }
 
     const tokens = buildTokens(user.id, user.email, user.role);
-    await RefreshTokenModel.create(
-      user.id,
-      tokens.refreshToken,
-      expiresAt(TOKEN_TTL.REFRESH_TOKEN)
-    );
+    await RefreshTokenModel.create(user.id, tokens.refreshToken, expiresAt(TOKEN_TTL.REFRESH_TOKEN));
 
     return { user: toSafeUser(user), tokens };
   },

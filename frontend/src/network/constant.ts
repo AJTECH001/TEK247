@@ -14,6 +14,7 @@ const LOGOUT              = "auth/logout" as const;
 const REFRESH_TOKEN       = "auth/refresh" as const;
 const FORGOT_PASSWORD     = "auth/forgot-password" as const;
 const RESET_PASSWORD      = "auth/reset-password" as const;
+const ENOKI_LOGIN         = "auth/enoki" as const;
 const GET_ME              = "auth/me" as const;
 
 // ─── Admin Endpoints ───────────────────────────────────────────────────────────
@@ -67,6 +68,7 @@ export const Endpoints = {
   REFRESH_TOKEN,
   FORGOT_PASSWORD,
   RESET_PASSWORD,
+  ENOKI_LOGIN,
   GET_ME,
   ADMIN_USERS,
   LAPTOPS,

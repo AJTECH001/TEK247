@@ -1,14 +1,26 @@
 import { useState } from "react";
-import { zkLoginUtils } from "../../utils/zklogin";
+import { useEnokiFlow } from "@mysten/enoki/react";
 import { FaGoogle } from "react-icons/fa";
+import { GOOGLE_CLIENT_ID, SUI_NETWORK } from "../../network/onchain";
+
+const REDIRECT_URL =
+  (import.meta.env.VITE_REDIRECT_URL as string) ?? `${window.location.origin}/auth/zklogin/callback`;
 
 export default function AuthLogin() {
   const [isLoading, setIsLoading] = useState(false);
+  const flow = useEnokiFlow();
 
   const handleZkLogin = async () => {
     try {
       setIsLoading(true);
-      await zkLoginUtils.prepareLogin();
+      const url = await flow.createAuthorizationURL({
+        provider: "google",
+        clientId: GOOGLE_CLIENT_ID,
+        redirectUrl: REDIRECT_URL,
+        network: SUI_NETWORK,
+        extraParams: { scope: ["openid", "email", "profile"] },
+      });
+      window.location.href = url;
     } catch (error) {
       console.error("zkLogin preparation failed", error);
       setIsLoading(false);

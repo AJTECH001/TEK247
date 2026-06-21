@@ -4,6 +4,10 @@ import { logger } from "../utils/logger";
 
 const EmailService = {
   async sendVerificationEmail(to: string, fullName: string, token: string): Promise<void> {
+    if (!resend) {
+      logger.warn(`[email disabled] skipping verification email to ${to}`);
+      return;
+    }
     const verifyUrl = `${env.FRONTEND_URL}/verify-email?token=${token}`;
 
     const { error } = await resend.emails.send({
@@ -36,6 +40,10 @@ const EmailService = {
   },
 
   async sendNotificationEmail(to: string, title: string, message: string): Promise<void> {
+    if (!resend) {
+      logger.warn(`[email disabled] skipping notification email to ${to}`);
+      return;
+    }
     const { error } = await resend.emails.send({
       from: env.RESEND_FROM_EMAIL,
       to,
@@ -62,6 +70,10 @@ const EmailService = {
   },
 
   async sendPasswordResetEmail(to: string, fullName: string, token: string): Promise<void> {
+    if (!resend) {
+      logger.warn(`[email disabled] skipping password reset email to ${to}`);
+      throw new Error("Email service is not configured");
+    }
     const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
 
     const { error } = await resend.emails.send({

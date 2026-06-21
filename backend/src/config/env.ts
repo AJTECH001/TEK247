@@ -28,10 +28,16 @@ export const env = {
   JWT_REFRESH_SECRET:      required("JWT_REFRESH_SECRET"),
   JWT_REFRESH_EXPIRES_IN:  process.env.JWT_REFRESH_EXPIRES_IN ?? "30d",
 
-  RESEND_API_KEY:    required("RESEND_API_KEY"),
-  RESEND_FROM_EMAIL: required("RESEND_FROM_EMAIL"),
+  // Email (Resend) is optional. When unset, email sends are skipped (logged) so
+  // the server still boots and the Google/zkLogin demo path works without it.
+  RESEND_API_KEY:    process.env.RESEND_API_KEY ?? "",
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL ?? "noreply@tek247.app",
 
   FRONTEND_URL: process.env.FRONTEND_URL ?? "http://localhost:5173",
+
+  // Google OAuth client id (must match the frontend / Enoki provider) — used to
+  // verify the `aud` claim of the Google ID token on login.
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "597702663809-gmnoiqjnkd2gvbfto9n37rmvnqi4ekci.apps.googleusercontent.com",
 
   // Sui
   SUI_NETWORK:      process.env.SUI_NETWORK ?? "testnet",

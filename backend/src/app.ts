@@ -48,8 +48,7 @@ const authLimiter = rateLimit({
 });
 app.use("/api/v1/auth/login",                authLimiter);
 app.use("/api/v1/auth/register",             authLimiter);
-app.use("/api/v1/auth/zklogin",              authLimiter);
-app.use("/api/v1/auth/zklogin-salt",         authLimiter);
+app.use("/api/v1/auth/enoki",                authLimiter);
 app.use("/api/v1/auth/forgot-password",      authLimiter);
 app.use("/api/v1/auth/resend-verification",  authLimiter);
 app.use("/api/v1/auth/reset-password",       authLimiter);
