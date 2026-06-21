@@ -43,6 +43,17 @@ function App() {
       element: <ZkLoginCallback />,
     },
     {
+      // Redirect target for the Enoki *wallet* OAuth popup (escrow signing).
+      // Logic-free: the parent window reads the token from this popup's URL, then
+      // closes it — so this must NOT run auth logic or navigate (it would drop the hash).
+      path: "/enoki-callback",
+      element: (
+        <div className="flex items-center justify-center min-h-screen bg-pageWhite">
+          <p className="text-inputGrey text-sm">Completing sign-in…</p>
+        </div>
+      ),
+    },
+    {
       path: "/dashboard",
       element: isLoggedIn ? <Dashboard /> : <Navigate to="/" />,
       children: [

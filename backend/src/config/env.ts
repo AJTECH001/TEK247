@@ -22,6 +22,9 @@ export const env = {
   DB_NAME:     DATABASE_URL ? (process.env.DB_NAME ?? "")     : required("DB_NAME"),
   DB_USER:     DATABASE_URL ? (process.env.DB_USER ?? "")     : required("DB_USER"),
   DB_PASSWORD: DATABASE_URL ? (process.env.DB_PASSWORD ?? "") : required("DB_PASSWORD"),
+  // Force SSL on the DB connection. Needed for hosts that require it (e.g. Render,
+  // Railway public proxy). Leave unset for Railway's plaintext internal connection.
+  DB_SSL: (process.env.DB_SSL ?? "").toLowerCase() === "true",
 
   JWT_SECRET:              required("JWT_SECRET"),
   JWT_EXPIRES_IN:          process.env.JWT_EXPIRES_IN ?? "15m",

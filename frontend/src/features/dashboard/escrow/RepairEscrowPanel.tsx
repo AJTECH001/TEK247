@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { useWallets, useConnectWallet } from "@mysten/dapp-kit";
+import { isEnokiWallet, type EnokiWallet } from "@mysten/enoki";
 import toast from "react-hot-toast";
 import { EscrowsAPI, type OnChainEscrow } from "../../../network/escrows";
 import { SHOP_ADDRESS, fromUsdcUnits, explorerObject, explorerTx } from "../../../network/onchain";
@@ -32,11 +33,32 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
+function MilestoneBadge({ status }: { status: number }) {
+  const styles = [
+    "bg-gray-100 text-gray-600",            // Pending
+    "bg-lorryBlueBackground text-lorryBlueText", // Submitted
+    "bg-lorryGreenBg text-lorryGreenText",  // Released
+  ];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] ?? styles[0]}`}>
+      {status === 2 && <span aria-hidden>✓</span>}
+      {M_STATUS[status] ?? "—"}
+    </span>
+  );
+}
+
 export default function RepairEscrowPanel({ repairId, isAdmin }: Props) {
   const qc = useQueryClient();
   const actions = useEscrowActions();
   const [amount, setAmount] = useState("10");
-  const [customerBps, setCustomerBps] = useState("5000");
+  const [customerPct, setCustomerPct] = useState(50);
+
+  // Connect the Google zkLogin wallet directly — no generic "Connect a Wallet" modal.
+  const wallets = useWallets();
+  const { mutate: connectWallet, isPending: connecting } = useConnectWallet();
+  const googleWallet = wallets.find(
+    (w): w is EnokiWallet => isEnokiWallet(w) && w.provider === "google"
+  );
 
   // Existing escrows mirrored for this repair (fast list).
   const listQuery = useQuery({
@@ -100,8 +122,7 @@ export default function RepairEscrowPanel({ repairId, isAdmin }: Props) {
 
   async function handleResolve() {
     if (!escrowId) return;
-    const bps = parseInt(customerBps, 10);
-    if (isNaN(bps) || bps < 0 || bps > 10000) { toast.error("Customer share must be 0–10000 bps"); return; }
+    const bps = Math.round(customerPct * 100); // % → basis points (0–10000)
     const res = await EscrowsAPI.resolve(escrowId, bps);
     if ("error" in res) { toast.error(res.error); return; }
     toast.success("Dispute resolved on-chain");
@@ -120,11 +141,21 @@ export default function RepairEscrowPanel({ repairId, isAdmin }: Props) {
         {escrow && <StatusPill status={escrow.status} />}
       </div>
 
-      {/* Wallet connect */}
+      {/* Wallet connect — direct Google zkLogin, no generic wallet modal */}
       {!actions.account && (
-        <div className="flex flex-col items-start gap-2">
-          <p className="text-xs text-inputGrey">Pay with Google — no wallet, no seed phrase, no gas.</p>
-          <ConnectButton connectText="Continue with Google" />
+        <div className="flex flex-col items-start gap-2 rounded-lg bg-white border border-inputBorderGrey p-3">
+          <p className="text-sm font-medium text-lorryDarkBlack">Pay with your Google account</p>
+          <p className="text-xs text-textGrey">No wallet, no seed phrase, and gas is sponsored — you pay $0 in fees.</p>
+          <button
+            onClick={() => googleWallet && connectWallet({ wallet: googleWallet })}
+            disabled={!googleWallet || connecting}
+            className="inline-flex items-center gap-2.5 px-4 py-2.5 min-h-[44px] bg-lorryBlue text-white text-sm font-semibold rounded-lg hover:bg-lorryBlue/90 disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#fff" d="M21.35 11.1H12v2.9h5.35c-.25 1.5-1.7 4.4-5.35 4.4-3.2 0-5.85-2.65-5.85-5.9S8.8 6.6 12 6.6c1.85 0 3.1.8 3.8 1.45l2.6-2.5C16.8 3.95 14.6 3 12 3 6.95 3 2.85 7.1 2.85 12.1S6.95 21.2 12 21.2c5.3 0 8.8-3.7 8.8-8.95 0-.6-.05-1.05-.15-1.55z" />
+            </svg>
+            {connecting ? "Connecting…" : "Continue with Google"}
+          </button>
         </div>
       )}
 
@@ -156,10 +187,13 @@ export default function RepairEscrowPanel({ repairId, isAdmin }: Props) {
           <button
             onClick={handleFund}
             disabled={actions.pending === "create"}
-            className="w-full py-2 bg-lorryBlue text-white text-sm font-medium rounded-lg hover:bg-lorryBlue/90 disabled:opacity-50"
+            className="w-full min-h-[44px] py-3 bg-lorryBlue text-white text-base font-semibold rounded-lg hover:bg-lorryBlue/90 disabled:opacity-50"
           >
             {actions.pending === "create" ? "Funding…" : "Pay into escrow"}
           </button>
+          <p className="text-[11px] text-textGrey text-center">
+            Held safely on-chain · released only as you approve each stage · gas sponsored
+          </p>
         </div>
       )}
 
@@ -190,13 +224,13 @@ export default function RepairEscrowPanel({ repairId, isAdmin }: Props) {
                   <span className="text-inputGrey ml-2">{fromUsdcUnits(m.amount).toFixed(2)} USDC</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-inputGrey">{M_STATUS[m.status] ?? "—"}</span>
+                  <MilestoneBadge status={m.status} />
                   {/* Shop submits pending work */}
                   {isAdmin && escrow.status === "active" && m.status === 0 && (
                     <button
                       onClick={() => run(() => actions.submitMilestone(escrow.objectId, i), { loading: "Submitting…", success: "Marked done" })}
                       disabled={!!actions.pending}
-                      className="px-2.5 py-1 bg-lorryBlue text-white text-xs rounded hover:bg-lorryBlue/90 disabled:opacity-50"
+                      className="min-h-[40px] px-3.5 py-2 bg-lorryBlue text-white text-sm font-medium rounded-lg hover:bg-lorryBlue/90 disabled:opacity-50"
                     >
                       Mark done
                     </button>
@@ -206,12 +240,11 @@ export default function RepairEscrowPanel({ repairId, isAdmin }: Props) {
                     <button
                       onClick={() => run(() => actions.approveMilestone(escrow.objectId, i), { loading: "Releasing…", success: "Released to shop" })}
                       disabled={!!actions.pending}
-                      className="px-2.5 py-1 bg-lorryGreenText text-white text-xs rounded hover:opacity-90 disabled:opacity-50"
+                      className="min-h-[40px] px-3.5 py-2 bg-lorryGreenText text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
                     >
-                      Approve & release
+                      Approve &amp; release
                     </button>
                   )}
-                  {m.status === 2 && <span className="text-lorryGreenText text-xs">✓</span>}
                 </div>
               </div>
             ))}
@@ -241,23 +274,38 @@ export default function RepairEscrowPanel({ repairId, isAdmin }: Props) {
 
           {/* Admin/arbiter resolves a disputed escrow */}
           {isAdmin && escrow.status === "disputed" && (
-            <div className="flex items-end gap-2 border-t border-inputBorderGrey pt-3">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-inputGrey mb-1">Customer share (bps, 0–10000)</label>
+            <div className="border-t border-inputBorderGrey pt-3 space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="customer-share" className="text-sm font-medium text-lorryDarkBlack">Customer refund</label>
+                  <span className="text-sm font-semibold text-lorryBlue">{customerPct}%</span>
+                </div>
                 <input
-                  type="number"
+                  id="customer-share"
+                  type="range"
                   min={0}
-                  max={10000}
-                  value={customerBps}
-                  onChange={(e) => setCustomerBps(e.target.value)}
-                  className="w-full text-sm border border-inputBorderGrey rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-lorryBlue"
+                  max={100}
+                  step={1}
+                  value={customerPct}
+                  onChange={(e) => setCustomerPct(parseInt(e.target.value, 10))}
+                  className="w-full accent-lorryBlue"
                 />
+                {(() => {
+                  const total = fromUsdcUnits(escrow.total);
+                  const toCustomer = (total * customerPct) / 100;
+                  return (
+                    <div className="mt-2 flex justify-between text-xs text-textGrey">
+                      <span>Customer gets <strong className="text-lorryDarkBlack">{toCustomer.toFixed(2)} USDC</strong></span>
+                      <span>Shop gets <strong className="text-lorryDarkBlack">{(total - toCustomer).toFixed(2)} USDC</strong></span>
+                    </div>
+                  );
+                })()}
               </div>
               <button
                 onClick={handleResolve}
-                className="px-3 py-2 bg-lorryBlue text-white text-xs rounded-lg hover:bg-lorryBlue/90"
+                className="w-full min-h-[44px] py-2.5 bg-lorryBlue text-white text-sm font-semibold rounded-lg hover:bg-lorryBlue/90"
               >
-                Resolve split
+                Resolve dispute &amp; split funds
               </button>
             </div>
           )}

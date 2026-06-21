@@ -9,8 +9,9 @@ types.setTypeParser(20, (val: string) => parseInt(val, 10));
 export const pool = env.DATABASE_URL
   ? new Pool({
       connectionString: env.DATABASE_URL,
-      // Railway PostgreSQL requires SSL in production
-      ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+      // SSL is opt-in via DB_SSL (managed hosts that require it). Railway's internal
+      // connection is plaintext, so leaving DB_SSL unset avoids an SSL handshake error.
+      ssl: env.DB_SSL ? { rejectUnauthorized: false } : false,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,

@@ -18,7 +18,13 @@ export function RegisterEnokiWallets() {
     const { unregister } = registerEnokiWallets({
       apiKey: ENOKI_API_KEY,
       providers: {
-        google: { clientId: GOOGLE_CLIENT_ID },
+        google: {
+          clientId: GOOGLE_CLIENT_ID,
+          // The wallet's OAuth popup defaults its redirect_uri to the *current page*,
+          // which isn't registered in Google. Pin it to a dedicated, registered,
+          // logic-free page so the popup completes cleanly.
+          redirectUrl: `${window.location.origin}/enoki-callback`,
+        },
       },
       client,
       network,

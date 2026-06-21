@@ -9,6 +9,10 @@ import { notFound, errorHandler } from "./middleware/error.middleware";
 
 const app = express();
 
+// Behind a single managed proxy (Railway/Render), trust the first hop so
+// express-rate-limit keys on the real client IP, not the shared proxy IP.
+app.set("trust proxy", 1);
+
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 // Support comma-separated origins: e.g. "https://ajtech.vercel.app,https://ajtech.ng"
 const allowedOrigins = env.CORS_ORIGIN
